@@ -1,0 +1,83 @@
+Sub StockAnalysis()
+    Dim ws As Worksheet
+    Dim LastRow As Long, i As Long
+    Dim Ticker As String, GreatestIncTicker As String, GreatestDecTicker As String, GreatestVolTicker As String
+    Dim OpenPrice As Double, ClosePrice As Double, YearlyChange As Double, PercentChange As Double, TotalVolume As Double, GreatestIncrease As Double, GreatestDecrease As Double, GreatestVolume As Double
+    Dim SummaryTableRow As Integer
+    
+    For Each ws In ThisWorkbook.Worksheets
+        If ws.Name = "2018" Then
+            SummaryTableRow = 2
+            LastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+            OpenPrice = ws.Cells(2, 3).Value
+            TotalVolume = 0
+            GreatestIncrease = 0
+            GreatestDecrease = 0
+            GreatestVolume = 0
+            GreatestIncTicker = ""
+            GreatestDecTicker = ""
+            GreatestVolTicker = ""
+
+            For i = 2 To LastRow
+                If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then
+                    Ticker = ws.Cells(i, 1).Value
+                    ClosePrice = ws.Cells(i, 6).Value
+                    YearlyChange = ClosePrice - OpenPrice
+                    If OpenPrice <> 0 Then
+                        PercentChange = YearlyChange / OpenPrice
+                    Else
+                        PercentChange = 0
+                    End If
+                    TotalVolume = TotalVolume + ws.Cells(i, 7).Value
+
+                    ws.Cells(SummaryTableRow, 9).Value = Ticker
+                    ws.Cells(SummaryTableRow, 10).Value = YearlyChange
+                    ws.Cells(SummaryTableRow, 11).Value = PercentChange
+                    ws.Cells(SummaryTableRow, 12).Value = TotalVolume
+
+                    If YearlyChange > 0 Then
+                        ws.Cells(SummaryTableRow, 10).Interior.Color = vbGreen
+                    ElseIf YearlyChange < 0 Then
+                        ws.Cells(SummaryTableRow, 10).Interior.Color = vbRed
+                    End If
+
+                    If PercentChange > GreatestIncrease Then
+                        GreatestIncrease = PercentChange
+                        GreatestIncTicker = Ticker
+                    End If
+
+                    If PercentChange < GreatestDecrease Then
+                        GreatestDecrease = PercentChange
+                        GreatestDecTicker = Ticker
+                    End If
+
+                    If TotalVolume > GreatestVolume Then
+                        GreatestVolume = TotalVolume
+                        GreatestVolTicker = Ticker
+                    End If
+
+                    SummaryTableRow = SummaryTableRow + 1
+                    OpenPrice = ws.Cells(i + 1, 3).Value
+                    TotalVolume = 0
+                Else
+                    TotalVolume = TotalVolume + ws.Cells(i, 7).Value
+                End If
+            Next i
+
+            ws.Cells(2, 15).Value = "Greatest % Increase"
+            ws.Cells(3, 15).Value = "Greatest % Decrease"
+            ws.Cells(4, 15).Value = "Greatest Total Volume"
+            ws.Cells(2, 16).Value = GreatestIncTicker
+            ws.Cells(3, 16).Value = GreatestDecTicker
+            ws.Cells(4, 16).Value = GreatestVolTicker
+            ws.Cells(2, 17).Value = FormatPercent(GreatestIncrease)
+            ws.Cells(2, 17).NumberFormat = "0.00%"
+            ws.Cells(3, 17).Value = FormatPercent(GreatestDecrease)
+            ws.Cells(3, 17).NumberFormat = "0.00%"
+            ws.Cells(4, 17).Value = GreatestVolume
+
+            ws.Columns("I:Q").AutoFit
+        End If
+    Next ws
+End Sub
+
